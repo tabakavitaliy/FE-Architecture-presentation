@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolution of Frontend Architecture</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#000;--text:#f5f5f7;--dim:#86868b;--accent:#2997ff;
+  --grad1:#1d1d1f;--grad2:#0a0a0a;
+  --orange:#ff6d2e;--blue:#2997ff;--purple:#bf5af2;
+  --green:#30d158;--pink:#ff375f;--teal:#5ac8fa;
+  --yellow:#ffd60a;
+  --slide-pad:clamp(2rem,5vw,6rem);
+  --fs-body:2rem;
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(0,0,0,.82);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid rgba(255,255,255,.08);padding:.75rem var(--slide-pad);
+  display:flex;align-items:center;justify-content:space-between;transition:transform .3s}
+nav.hidden{transform:translateY(-100%)}
+.nav-title{font-size:var(--fs-body);font-weight:600;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-progress{display:flex;gap:6px;align-items:center}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:all .3s}
+.nav-dot.active{background:var(--accent);transform:scale(1.3)}
+.slide-counter{font-size:var(--fs-body);color:var(--dim);margin-left:12px;font-weight:500}
+
+section{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:calc(3.5rem + var(--slide-pad)) var(--slide-pad) var(--slide-pad);position:relative;overflow:hidden}
+
+h1{font-size:clamp(3rem,5vw,5rem);font-weight:800;line-height:1.08;letter-spacing:-.03em;margin-bottom:1rem}
+h2{font-size:3rem;font-weight:700;line-height:1.12;letter-spacing:-.02em;margin-bottom:.75rem}
+h3{font-size:clamp(1.75rem,2.5vw,2.25rem);font-weight:600;line-height:1.2;margin-bottom:.5rem}
+p,.body-text{font-size:var(--fs-body);line-height:1.5;color:var(--dim);font-weight:400}
+.body-text+.body-text{margin-top:.6rem}
+
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s cubic-bezier(.25,.46,.45,.94),transform .8s cubic-bezier(.25,.46,.45,.94)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-delay-1{transition-delay:.15s}
+.reveal-delay-2{transition-delay:.3s}
+.reveal-delay-3{transition-delay:.45s}
+.reveal-delay-4{transition-delay:.6s}
+.reveal-delay-5{transition-delay:.75s}
+
+.grad-blue{background:linear-gradient(135deg,#2997ff,#5ac8fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.grad-orange{background:linear-gradient(135deg,#ff6d2e,#ffd60a);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.grad-purple{background:linear-gradient(135deg,#bf5af2,#ff375f);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.grad-green{background:linear-gradient(135deg,#30d158,#5ac8fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.grad-pink{background:linear-gradient(135deg,#ff375f,#ff6d2e);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+.split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,4vw,5rem);align-items:center}
+.center-content{text-align:center;display:flex;flex-direction:column;align-items:center}
+.badge{display:inline-block;font-size:var(--fs-body);font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem}
+.tag{display:inline-block;padding:.3rem .8rem;border-radius:999px;font-size:var(--fs-body);font-weight:500;border:1px solid rgba(255,255,255,.15);color:var(--dim);margin:.25rem}
+
+.timeline{display:flex;gap:0;align-items:stretch;margin-top:3rem;position:relative;width:100%}
+.timeline::before{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--purple),var(--blue),var(--green),var(--orange),var(--pink));transform:translateY(-50%)}
+.tl-item{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;padding:2.5rem .5rem}
+.tl-dot{width:16px;height:16px;border-radius:50%;position:absolute;top:50%;transform:translateY(-50%);z-index:1;box-shadow:0 0 20px currentColor}
+.tl-label{font-size:var(--fs-body);font-weight:700;margin-bottom:.4rem}
+.tl-year{font-size:var(--fs-body);color:var(--dim);font-weight:500}
+.tl-top{padding-bottom:2rem}
+.tl-bottom{padding-top:2rem}
+
+.arch-diagram{background:linear-gradient(135deg,rgba(41,151,255,.08),rgba(191,90,242,.08));border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:2rem;width:100%;max-width:560px}
+.arch-row{display:flex;gap:1rem;justify-content:center;margin:.75rem 0;flex-wrap:wrap}
+.arch-box{padding:.6rem 1.2rem;border-radius:12px;font-size:var(--fs-body);font-weight:600;text-align:center;min-width:80px}
+.arch-arrow{text-align:center;font-size:var(--fs-body);color:var(--dim);margin:.3rem 0}
+.arch-label{font-size:var(--fs-body);font-weight:600;text-align:center;margin-bottom:.5rem;color:var(--text)}
+
+.pkg-diagram{background:linear-gradient(135deg,rgba(255,109,46,.06),rgba(255,214,10,.06));border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:2rem;width:100%;max-width:560px}
+.pkg-row{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;margin:.75rem 0}
+.pkg-block{padding:.75rem 1rem;border-radius:12px;font-size:var(--fs-body);font-weight:600;text-align:center;position:relative;min-width:90px}
+.pkg-connector{width:2px;height:24px;background:rgba(255,255,255,.2);margin:0 auto}
+
+.points{display:flex;flex-direction:column;gap:1.2rem;margin-top:1rem}
+.point{display:flex;align-items:flex-start;gap:1rem}
+.point-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:var(--fs-body);margin-top:2px}
+.point-text{font-size:var(--fs-body);line-height:1.5;color:var(--dim)}
+
+.retro-browser{background:#e8e0d0;border-radius:12px;overflow:hidden;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.retro-bar{background:linear-gradient(180deg,#c8c0b0,#b0a898);padding:6px 10px;display:flex;align-items:center;gap:6px}
+.retro-btn{width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.3)}
+.retro-url{flex:1;background:#fff;border-radius:3px;padding:2px 6px;font-size:var(--fs-body);color:#333;font-family:monospace}
+.retro-body{padding:12px;font-family:'Times New Roman',serif;color:#333;font-size:var(--fs-body);line-height:1.4}
+.retro-body h4{color:#0000cc;text-decoration:underline;font-size:var(--fs-body);margin:.5rem 0 .25rem;cursor:pointer}
+.retro-body p{margin:.3rem 0;font-size:var(--fs-body)}
+.retro-body .retro-header{background:#333;color:#ddd;padding:4px 8px;font-size:var(--fs-body);font-family:monospace;margin:-12px -12px 8px;text-align:center}
+.retro-body hr{border:none;border-top:1px solid #999;margin:.5rem 0}
+.retro-body .counter{text-align:center;font-size:var(--fs-body);color:#666;margin-top:.5rem}
+
+.wiki-browser{background:#fff;border-radius:12px;overflow:hidden;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.wiki-bar{background:linear-gradient(180deg,#f0f0f0,#ddd);padding:6px 10px;display:flex;align-items:center;gap:6px}
+.wiki-body{padding:12px;color:#333;font-size:var(--fs-body);line-height:1.5;display:flex;gap:12px}
+.wiki-sidebar{width:80px;flex-shrink:0;font-size:var(--fs-body);color:#0645ad;border-right:1px solid #ddd;padding-right:8px}
+.wiki-sidebar div{padding:2px 0;cursor:pointer}
+.wiki-main h4{font-size:var(--fs-body);margin:0 0 .3rem;font-weight:normal;border-bottom:1px solid #aaa;padding-bottom:2px}
+.wiki-main p{font-size:var(--fs-body);color:#333;margin:.3rem 0}
+.wiki-logo{font-size:var(--fs-body);font-weight:bold;text-align:center;margin-bottom:4px;font-family:serif}
+
+.kbd-hint{position:fixed;bottom:1.5rem;right:1.5rem;display:flex;gap:.5rem;align-items:center;color:rgba(255,255,255,.25);font-size:var(--fs-body);font-weight:500;z-index:90;transition:opacity .5s}
+.kbd-hint span{padding:.2rem .5rem;border:1px solid rgba(255,255,255,.15);border-radius:6px;font-size:var(--fs-body)}
+.kbd-hint.faded{opacity:0}
+
+.scroll-progress{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--blue),var(--purple));z-index:200;transition:width .1s;width:0}
+
+@media(max-width:768px){
+  .split{grid-template-columns:1fr;gap:2rem}
+  .timeline{flex-direction:column;align-items:flex-start;gap:1.5rem}
+  .timeline::before{top:0;bottom:0;left:24px;right:auto;width:2px;height:100%}
+  .tl-item{flex-direction:row;padding:.75rem 0 .75rem 3.5rem}
+  .tl-dot{left:16px;top:50%;transform:translate(-50%,-50%)}
+  .tl-top,.tl-bottom{padding:0}
+  nav{padding:.6rem 1rem}
+}
+
+#slide-1{background:radial-gradient(ellipse at 50% 0%,rgba(41,151,255,.12),transparent 70%),radial-gradient(ellipse at 80% 100%,rgba(191,90,242,.1),transparent 60%),var(--bg)}
+#slide-3{background:radial-gradient(ellipse at 20% 80%,rgba(48,209,88,.06),transparent 50%),var(--bg)}
+#slide-4{background:radial-gradient(ellipse at 50% 50%,rgba(41,151,255,.06),transparent 60%),var(--bg)}
+</style>
+</head>
+<body>
+
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<nav id="mainNav">
+  <div class="nav-title">Frontend Evolution</div>
+  <div class="nav-progress">
+    <div class="nav-dot active" data-slide="0"></div>
+    <div class="nav-dot" data-slide="1"></div>
+    <div class="nav-dot" data-slide="2"></div>
+    <div class="nav-dot" data-slide="3"></div>
+    <div class="nav-dot" data-slide="4"></div>
+    <div class="nav-dot" data-slide="5"></div>
+    <div class="nav-dot" data-slide="6"></div>
+    <div class="nav-dot" data-slide="7"></div>
+    <div class="nav-dot" data-slide="8"></div>
+    <div class="nav-dot" data-slide="9"></div>
+    <div class="nav-dot" data-slide="10"></div>
+    <div class="nav-dot" data-slide="11"></div>
+    <div class="nav-dot" data-slide="12"></div>
+    <div class="nav-dot" data-slide="13"></div>
+    <div class="nav-dot" data-slide="14"></div>
+    <div class="nav-dot" data-slide="15"></div>
+    <div class="nav-dot" data-slide="16"></div>
+    <div class="nav-dot" data-slide="17"></div>
+    <span class="slide-counter"><span id="currentSlide">1</span>/18</span>
+  </div>
+</nav>
+
+<!-- SLIDE 1: TITLE -->
+<section id="slide-1">
+  <div class="center-content" style="gap:1.5rem">
+    <div class="reveal">
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+        <rect width="80" height="80" rx="18" fill="url(#g1)"/>
+        <path d="M20 55V25l20-10 20 10v30L40 65 20 55z" stroke="rgba(255,255,255,.9)" stroke-width="2" fill="none"/>
+        <path d="M20 25l20 10 20-10M40 35v30" stroke="rgba(255,255,255,.5)" stroke-width="1.5"/>
+        <circle cx="40" cy="35" r="3" fill="#fff"/>
+        <defs><linearGradient id="g1" x1="0" y1="0" x2="80" y2="80"><stop stop-color="#2997ff"/><stop offset="1" stop-color="#bf5af2"/></linearGradient></defs>
+      </svg>
+    </div>
+    <h1 class="reveal reveal-delay-1" style="max-width:900px">
+      Evolution of <br><span class="grad-blue">Frontend Architecture</span>
+    </h1>
+    <p class="reveal reveal-delay-2" style="max-width:600px;text-align:center">
+      From HTML pages to Next.js server components
+    </p>
+    <div class="reveal reveal-delay-3" style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap;justify-content:center">
+      <span class="tag">Vitaliy Tabaka</span>
+      <span class="tag">Ivan Koretskyy</span>
+      <span class="tag">2026</span>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 2: WHO WE ARE -->
+<section id="slide-2">
+  <div class="center-content" style="gap:2rem">
+    <div class="badge reveal">Meet the speakers</div>
+    <h1 class="reveal reveal-delay-1"><span class="grad-purple">Who We Are</span></h1>
+    <div class="reveal reveal-delay-2" style="display:flex;gap:2rem;margin-top:2rem;flex-wrap:wrap;justify-content:center">
+      <div style="background:linear-gradient(135deg,rgba(41,151,255,.1),rgba(191,90,242,.1));border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:2.5rem;min-width:260px;max-width:320px;text-align:center">
+        <div style="width:120px;height:120px;border-radius:50%;margin:0 auto 1rem;overflow:hidden;border:3px solid rgba(41,151,255,.4);box-shadow:0 0 30px rgba(41,151,255,.15);background:rgba(41,151,255,.1)">
+          <img referrerpolicy="no-referrer" crossorigin="anonymous" src="https://media.licdn.com/dms/image/v2/C4E03AQHzdUifUUrfXQ/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1537046381989?e=1773273600&v=beta&t=RDs_t9myBW7uxPDG9nKyMS78Czq4jL4wf_8lGPwtCt8" alt="Ivan Koretskyy" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        <h3>Ivan Koretskyy</h3>
+        <p>Senior Software Engineer @ELEKS</p>
+      </div>
+      <div style="background:linear-gradient(135deg,rgba(191,90,242,.1),rgba(255,55,95,.1));border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:2.5rem;min-width:260px;max-width:320px;text-align:center">
+        <div style="width:120px;height:120px;border-radius:50%;margin:0 auto 1rem;overflow:hidden;border:3px solid rgba(191,90,242,.4);box-shadow:0 0 30px rgba(191,90,242,.15);background:rgba(191,90,242,.1)">
+          <img referrerpolicy="no-referrer" crossorigin="anonymous" src="https://media.licdn.com/dms/image/v2/D5603AQGkFg7uZEDWVQ/profile-displayphoto-shrink_800_800/B56ZNlSDZ0G4Ac-/0/1732571052035?e=1773273600&v=beta&t=a1f2HQleUHqVO1Fp8A6NkUPAuwyPuMYUgQEaag3Wq5I" alt="Vitaliy Tabaka" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        <h3>Vitaliy Tabaka</h3>
+        <p>Lead Software Engineer | North America Competence Lead @ELEKS</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 3: AGENDA -->
+<section id="slide-3">
+  <div style="max-width:800px;margin:0 auto">
+    <div class="badge reveal">Overview</div>
+    <h1 class="reveal reveal-delay-1"><span class="grad-green">Agenda</span></h1>
+    <div class="points" style="margin-top:2rem">
+      <div class="point reveal reveal-delay-1">
+        <div class="point-icon" style="background:rgba(41,151,255,.15);color:#2997ff">01</div>
+        <p class="point-text">Why frontend architecture keeps changing</p>
+      </div>
+      <div class="point reveal reveal-delay-2">
+        <div class="point-icon" style="background:rgba(191,90,242,.15);color:#bf5af2">02</div>
+        <p class="point-text">How scale and teams drive decisions</p>
+      </div>
+      <div class="point reveal reveal-delay-3">
+        <div class="point-icon" style="background:rgba(48,209,88,.15);color:#30d158">03</div>
+        <p class="point-text">Trade-offs at each stage</p>
+      </div>
+      <div class="point reveal reveal-delay-4">
+        <div class="point-icon" style="background:rgba(255,109,46,.15);color:#ff6d2e">04</div>
+        <p class="point-text">How to choose what fits your product</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 4: TIMELINE -->
+<section id="slide-4">
+  <div class="center-content">
+    <div class="badge reveal">The Journey</div>
+    <h2 class="reveal reveal-delay-1">Frontend Architecture <span class="grad-blue">Timeline</span></h2>
+    <div class="timeline reveal reveal-delay-2">
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--purple);color:var(--purple)"></div>
+        <div class="tl-top">
+          <div class="tl-label" style="color:var(--purple)">Static Documents</div>
+          <div class="tl-year">1990s</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--blue);color:var(--blue)"></div>
+        <div class="tl-bottom">
+          <div class="tl-label" style="color:var(--blue)">Multi-Page Apps</div>
+          <div class="tl-year">2000s</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--green);color:var(--green)"></div>
+        <div class="tl-top">
+          <div class="tl-label" style="color:var(--green)">Single Page Apps</div>
+          <div class="tl-year">2010–2016</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--orange);color:var(--orange)"></div>
+        <div class="tl-bottom">
+          <div class="tl-label" style="color:var(--orange)">NPM & Monorepos</div>
+          <div class="tl-year">2016–2020</div>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--pink);color:var(--pink)"></div>
+        <div class="tl-top">
+          <div class="tl-label" style="color:var(--pink)">Micro-Frontends</div>
+          <div class="tl-year">2020–now</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 5: 1990s STATIC -->
+<section id="slide-5">
+  <div class="split">
+    <div>
+      <div class="badge reveal" style="color:var(--purple)">1990s</div>
+      <h2 class="reveal reveal-delay-1">Web as <span class="grad-purple">Static Documents</span></h2>
+      <div class="points">
+        <div class="point reveal reveal-delay-1">
+          <div class="point-icon" style="background:rgba(191,90,242,.12);color:var(--purple)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+          </div>
+          <p class="point-text">Pure HTML files linked together</p>
+        </div>
+        <div class="point reveal reveal-delay-2">
+          <div class="point-icon" style="background:rgba(191,90,242,.12);color:var(--purple)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+          </div>
+          <p class="point-text">Little or no JavaScript</p>
+        </div>
+        <div class="point reveal reveal-delay-3">
+          <div class="point-icon" style="background:rgba(191,90,242,.12);color:var(--purple)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </div>
+          <p class="point-text">Every click reloads the page</p>
+        </div>
+        <div class="point reveal reveal-delay-4">
+          <div class="point-icon" style="background:rgba(191,90,242,.12);color:var(--purple)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+          <p class="point-text">Content updated by editing files</p>
+        </div>
+        <div class="point reveal reveal-delay-5">
+          <div class="point-icon" style="background:rgba(191,90,242,.12);color:var(--purple)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <p class="point-text">The web was documents, not applications</p>
+        </div>
+      </div>
+    </div>
+    <div class="reveal reveal-delay-2" style="display:flex;justify-content:center">
+      <div class="retro-browser">
+        <div class="retro-bar">
+          <div class="retro-btn" style="background:#ff5f57"></div>
+          <div class="retro-btn" style="background:#ffbd2e"></div>
+          <div class="retro-btn" style="background:#28c840"></div>
+          <div class="retro-url">http://www.mysite.com</div>
+        </div>
+        <div class="retro-body">
+          <div class="retro-header">★ Welcome to My Homepage ★</div>
+          <p style="text-align:center;font-weight:bold">Best viewed in Netscape Navigator</p>
+          <hr>
+          <h4>About Me</h4>
+          <p>Hello! Welcome to my corner of the World Wide Web!</p>
+          <h4>My Links</h4>
+          <p>• <span style="color:#0000cc;text-decoration:underline">Cool Sites</span></p>
+          <p>• <span style="color:#0000cc;text-decoration:underline">Guestbook</span></p>
+          <p>• <span style="color:#0000cc;text-decoration:underline">Web Ring</span></p>
+          <hr>
+          <div class="counter">Visitors: 001,337</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 6: 2000s MPA -->
+<section id="slide-6">
+  <div class="split">
+    <div>
+      <div class="badge reveal" style="color:var(--blue)">2000–2010</div>
+      <h2 class="reveal reveal-delay-1"><span class="grad-blue">Multi-Page Applications</span></h2>
+      <div class="points">
+        <div class="point reveal reveal-delay-2">
+          <div class="point-icon" style="background:rgba(41,151,255,.12);color:var(--blue)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <p class="point-text">Each page is a full HTML document</p>
+        </div>
+        <div class="point reveal reveal-delay-3">
+          <div class="point-icon" style="background:rgba(41,151,255,.12);color:var(--blue)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+          </div>
+          <p class="point-text">Server-side rendering and navigation</p>
+        </div>
+        <div class="point reveal reveal-delay-4">
+          <div class="point-icon" style="background:rgba(41,151,255,.12);color:var(--blue)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <p class="point-text">Simple & reliable</p>
+        </div>
+      </div>
+    </div>
+    <div class="reveal reveal-delay-2" style="display:flex;justify-content:center">
+      <div class="wiki-browser">
+        <div class="wiki-bar">
+          <div class="retro-btn" style="background:#ff5f57"></div>
+          <div class="retro-btn" style="background:#ffbd2e"></div>
+          <div class="retro-btn" style="background:#28c840"></div>
+          <div class="retro-url" style="font-family:monospace;color:#333;background:#fff;padding:2px 6px;border-radius:3px;flex:1">http://en.wikipedia.org</div>
+        </div>
+        <div class="wiki-body">
+          <div class="wiki-sidebar">
+            <div class="wiki-logo">W</div>
+            <div>Main Page</div>
+            <div>Recent changes</div>
+            <div>Random page</div>
+            <div>Help</div>
+          </div>
+          <div class="wiki-main" style="flex:1">
+            <h4 style="font-family:serif">Main Page</h4>
+            <p>Welcome to the free encyclopedia that anyone can edit.</p>
+            <div style="margin-top:8px;padding:6px;background:#f8f8f8;border:1px solid #ddd;border-radius:4px">
+              <p style="font-weight:bold;color:#333">Featured Article</p>
+              <p style="color:#555">Each page rendered fresh from the server on every request...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 7: MPA TRADE-OFFS -->
+<section id="slide-7">
+  <div style="max-width:900px;margin:0 auto">
+    <div class="badge reveal" style="color:var(--blue)">2000–2010</div>
+    <h2 class="reveal reveal-delay-1">MPA <span class="grad-blue">Trade-offs</span></h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem;margin-top:2rem">
+      <div class="reveal reveal-delay-2" style="background:rgba(48,209,88,.08);border:1px solid rgba(48,209,88,.2);border-radius:20px;padding:1.5rem">
+        <h3 style="color:var(--green);margin-bottom:.5rem">✓ Pros</h3>
+        <p class="body-text">SEO friendly</p>
+        <p class="body-text">Simple mental model</p>
+        <p class="body-text">Low frontend complexity</p>
+      </div>
+      <div class="reveal reveal-delay-3" style="background:rgba(255,55,95,.08);border:1px solid rgba(255,55,95,.2);border-radius:20px;padding:1.5rem">
+        <h3 style="color:var(--pink);margin-bottom:.5rem">✗ Cons</h3>
+        <p class="body-text">Slow navigation</p>
+        <p class="body-text">Duplicated UI work</p>
+        <p class="body-text">Full page reloads</p>
+      </div>
+      <div class="reveal reveal-delay-4" style="background:rgba(255,214,10,.08);border:1px solid rgba(255,214,10,.2);border-radius:20px;padding:1.5rem">
+        <h3 style="color:var(--yellow);margin-bottom:.5rem">⚡ Impact</h3>
+        <p class="body-text">Iteration speed slows as UI grows</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 8: SPA -->
+<section id="slide-8">
+  <div class="split">
+    <div>
+      <div class="badge reveal" style="color:var(--green)">2010–2016</div>
+      <h2 class="reveal reveal-delay-1">Single Page <span class="grad-green">Applications</span></h2>
+      <div class="points">
+        <div class="point reveal reveal-delay-2">
+          <div class="point-icon" style="background:rgba(48,209,88,.12);color:var(--green)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+          </div>
+          <p class="point-text">One HTML shell, dynamic UI updates</p>
+        </div>
+        <div class="point reveal reveal-delay-3">
+          <div class="point-icon" style="background:rgba(48,209,88,.12);color:var(--green)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <p class="point-text">Frontend becomes a real application</p>
+        </div>
+        <div class="point reveal reveal-delay-4">
+          <div class="point-icon" style="background:rgba(48,209,88,.12);color:var(--green)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <p class="point-text">React, Angular, Vue popularize this model</p>
+        </div>
+      </div>
+    </div>
+    <div class="reveal reveal-delay-2" style="display:flex;justify-content:center">
+      <svg viewBox="0 0 400 320" fill="none" style="max-width:400px;width:100%;filter:drop-shadow(0 20px 40px rgba(0,0,0,.3))">
+        <rect width="400" height="320" rx="24" fill="url(#spaBg)"/>
+        <rect x="24" y="24" width="352" height="44" rx="8" fill="rgba(255,255,255,.06)"/>
+        <circle cx="44" cy="46" r="6" fill="#ff5f57"/>
+        <circle cx="64" cy="46" r="6" fill="#ffbd2e"/>
+        <circle cx="84" cy="46" r="6" fill="#28c840"/>
+        <rect x="120" y="38" width="200" height="16" rx="8" fill="rgba(255,255,255,.08)"/>
+        <rect x="24" y="80" width="80" height="216" rx="8" fill="rgba(48,209,88,.12)" stroke="rgba(48,209,88,.3)" stroke-width="1"/>
+        <rect x="36" y="96" width="56" height="8" rx="4" fill="rgba(48,209,88,.4)"/>
+        <rect x="36" y="112" width="48" height="6" rx="3" fill="rgba(255,255,255,.1)"/>
+        <rect x="36" y="126" width="52" height="6" rx="3" fill="rgba(255,255,255,.1)"/>
+        <rect x="36" y="140" width="40" height="6" rx="3" fill="rgba(255,255,255,.1)"/>
+        <rect x="36" y="154" width="46" height="6" rx="3" fill="rgba(255,255,255,.08)"/>
+        <rect x="116" y="80" width="260" height="216" rx="8" fill="rgba(41,151,255,.06)" stroke="rgba(41,151,255,.2)" stroke-width="1" stroke-dasharray="6 3"/>
+        <text x="246" y="140" text-anchor="middle" fill="rgba(41,151,255,.6)" font-family="Inter,sans-serif" font-size="11" font-weight="600">DYNAMIC CONTENT</text>
+        <text x="246" y="160" text-anchor="middle" fill="rgba(255,255,255,.2)" font-family="Inter,sans-serif" font-size="9">No page reloads</text>
+        <path d="M200 180 L200 210 M190 200 L200 210 L210 200" stroke="rgba(41,151,255,.4)" stroke-width="2" fill="none"/>
+        <rect x="176" y="220" width="140" height="50" rx="8" fill="rgba(41,151,255,.1)" stroke="rgba(41,151,255,.3)" stroke-width="1"/>
+        <rect x="186" y="232" width="60" height="6" rx="3" fill="rgba(41,151,255,.3)"/>
+        <rect x="186" y="244" width="80" height="6" rx="3" fill="rgba(255,255,255,.08)"/>
+        <rect x="186" y="256" width="50" height="6" rx="3" fill="rgba(255,255,255,.06)"/>
+        <defs>
+          <linearGradient id="spaBg" x1="0" y1="0" x2="400" y2="320">
+            <stop stop-color="#1a1a2e"/><stop offset="1" stop-color="#0d1117"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 9: SPA ARCHITECTURE -->
+<section id="slide-9">
+  <div class="center-content">
+    <div class="badge reveal" style="color:var(--green)">Architecture</div>
+    <h2 class="reveal reveal-delay-1"><span class="grad-green">SPA</span> Architecture</h2>
+    <div class="reveal reveal-delay-2" style="margin-top:2rem">
+      <div class="arch-diagram" style="max-width:700px">
+        <div style="display:flex;gap:1.5rem;align-items:stretch;flex-wrap:wrap;justify-content:center">
+          <div style="flex:1;min-width:240px">
+            <div class="arch-label" style="color:var(--blue)">Front-End</div>
+            <div style="background:rgba(41,151,255,.1);border-radius:12px;padding:1rem;border:1px solid rgba(41,151,255,.2)">
+              <div class="arch-row">
+                <div class="arch-box" style="background:rgba(41,151,255,.2);color:var(--blue)">Web App</div>
+                <div class="arch-box" style="background:rgba(191,90,242,.2);color:var(--purple)">Mobile App</div>
+              </div>
+              <div class="arch-arrow">↓</div>
+              <div class="arch-row">
+                <span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">JS</span><span class="tag">Node.js</span>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;font-size:2rem;color:var(--dim)">⟷</div>
+          <div style="flex:1;min-width:240px">
+            <div class="arch-label" style="color:var(--green)">Back-End</div>
+            <div style="background:rgba(48,209,88,.1);border-radius:12px;padding:1rem;border:1px solid rgba(48,209,88,.2)">
+              <div class="arch-row">
+                <div class="arch-box" style="background:rgba(48,209,88,.2);color:var(--green)">Server</div>
+                <div class="arch-box" style="background:rgba(90,200,250,.2);color:var(--teal)">Database</div>
+              </div>
+              <div class="arch-arrow">↕</div>
+              <div class="arch-row">
+                <div class="arch-box" style="background:rgba(255,109,46,.2);color:var(--orange)">API</div>
+              </div>
+              <div class="arch-row" style="margin-top:.5rem">
+                <span class="tag">Java</span><span class="tag">Python</span><span class="tag">C++</span><span class="tag">PHP</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 10: SPA PROBLEMS -->
+<section id="slide-10">
+  <div class="split">
+    <div>
+      <div class="badge reveal" style="color:var(--pink)">Challenges</div>
+      <h2 class="reveal reveal-delay-1">SPA — <span class="grad-pink">New Problems</span></h2>
+      <div class="points">
+        <div class="point reveal reveal-delay-2">
+          <div class="point-icon" style="background:rgba(255,55,95,.12);color:var(--pink)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          </div>
+          <p class="point-text">Large bundles and slower initial load</p>
+        </div>
+        <div class="point reveal reveal-delay-3">
+          <div class="point-icon" style="background:rgba(255,55,95,.12);color:var(--pink)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <p class="point-text">Frontend complexity increases sharply</p>
+        </div>
+      </div>
+    </div>
+    <div class="reveal reveal-delay-2" style="display:flex;justify-content:center">
+      <svg viewBox="0 0 320 320" fill="none" style="max-width:320px;width:100%">
+        <rect width="320" height="320" rx="24" fill="url(#frusBg)"/>
+        <circle cx="160" cy="140" r="60" fill="none" stroke="rgba(255,55,95,.5)" stroke-width="2"/>
+        <line x1="130" y1="118" x2="148" y2="126" stroke="rgba(255,55,95,.7)" stroke-width="3" stroke-linecap="round"/>
+        <line x1="190" y1="118" x2="172" y2="126" stroke="rgba(255,55,95,.7)" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="144" cy="136" r="4" fill="rgba(255,55,95,.6)"/>
+        <circle cx="176" cy="136" r="4" fill="rgba(255,55,95,.6)"/>
+        <path d="M140 164 Q160 152 180 164" stroke="rgba(255,55,95,.5)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <rect x="60" y="240" width="30" height="40" rx="4" fill="rgba(255,55,95,.2)" stroke="rgba(255,55,95,.3)" stroke-width="1"/>
+        <rect x="100" y="220" width="30" height="60" rx="4" fill="rgba(255,55,95,.3)" stroke="rgba(255,55,95,.4)" stroke-width="1"/>
+        <rect x="140" y="195" width="30" height="85" rx="4" fill="rgba(255,55,95,.4)" stroke="rgba(255,55,95,.5)" stroke-width="1"/>
+        <rect x="180" y="215" width="30" height="65" rx="4" fill="rgba(255,109,46,.3)" stroke="rgba(255,109,46,.4)" stroke-width="1"/>
+        <rect x="220" y="230" width="30" height="50" rx="4" fill="rgba(255,109,46,.2)" stroke="rgba(255,109,46,.3)" stroke-width="1"/>
+        <text x="160" y="298" text-anchor="middle" fill="rgba(255,255,255,.25)" font-family="Inter,sans-serif" font-size="10" font-weight="500">bundle size keeps growing...</text>
+        <defs>
+          <linearGradient id="frusBg" x1="0" y1="0" x2="320" y2="320">
+            <stop stop-color="#1a0a10"/><stop offset="1" stop-color="#0d0d0d"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 11: SCALING WITH PACKAGES -->
+<section id="slide-11">
+  <div class="split">
+    <div>
+      <div class="badge reveal" style="color:var(--orange)">2016–2020</div>
+      <h2 class="reveal reveal-delay-1">Scaling SPA with <span class="grad-orange">Packages</span></h2>
+      <div class="points">
+        <div class="point reveal reveal-delay-2">
+          <div class="point-icon" style="background:rgba(255,109,46,.12);color:var(--orange)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <p class="point-text">One frontend team becomes many</p>
+        </div>
+        <div class="point reveal reveal-delay-3">
+          <div class="point-icon" style="background:rgba(255,109,46,.12);color:var(--orange)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>
+          </div>
+          <p class="point-text">Parallel development</p>
+        </div>
+        <div class="point reveal reveal-delay-4">
+          <div class="point-icon" style="background:rgba(255,109,46,.12);color:var(--orange)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          </div>
+          <p class="point-text">Shared UI and domain logic extracted</p>
+        </div>
+      </div>
+    </div>
+    <div class="reveal reveal-delay-2" style="display:flex;justify-content:center">
+      <svg viewBox="0 0 400 320" fill="none" style="max-width:400px;width:100%;filter:drop-shadow(0 20px 40px rgba(0,0,0,.3))">
+        <rect width="400" height="320" rx="24" fill="url(#pkgBg)"/>
+        <rect x="40" y="100" width="90" height="70" rx="12" fill="rgba(255,109,46,.15)" stroke="rgba(255,109,46,.4)" stroke-width="1.5"/>
+        <text x="85" y="128" text-anchor="middle" fill="var(--orange)" font-family="Inter,sans-serif" font-size="10" font-weight="700">npm</text>
+        <text x="85" y="148" text-anchor="middle" fill="rgba(255,255,255,.4)" font-family="Inter,sans-serif" font-size="8">ui-kit</text>
+        <rect x="155" y="80" width="90" height="70" rx="12" fill="rgba(255,55,95,.15)" stroke="rgba(255,55,95,.4)" stroke-width="1.5"/>
+        <text x="200" y="108" text-anchor="middle" fill="var(--pink)" font-family="Inter,sans-serif" font-size="10" font-weight="700">npm</text>
+        <text x="200" y="128" text-anchor="middle" fill="rgba(255,255,255,.4)" font-family="Inter,sans-serif" font-size="8">auth</text>
+        <rect x="270" y="100" width="90" height="70" rx="12" fill="rgba(41,151,255,.15)" stroke="rgba(41,151,255,.4)" stroke-width="1.5"/>
+        <text x="315" y="128" text-anchor="middle" fill="var(--blue)" font-family="Inter,sans-serif" font-size="10" font-weight="700">npm</text>
+        <text x="315" y="148" text-anchor="middle" fill="rgba(255,255,255,.4)" font-family="Inter,sans-serif" font-size="8">utils</text>
+        <rect x="100" y="190" width="90" height="70" rx="12" fill="rgba(191,90,242,.15)" stroke="rgba(191,90,242,.4)" stroke-width="1.5"/>
+        <text x="145" y="218" text-anchor="middle" fill="var(--purple)" font-family="Inter,sans-serif" font-size="10" font-weight="700">npm</text>
+        <text x="145" y="238" text-anchor="middle" fill="rgba(255,255,255,.4)" font-family="Inter,sans-serif" font-size="8">charts</text>
+        <rect x="210" y="190" width="90" height="70" rx="12" fill="rgba(48,209,88,.15)" stroke="rgba(48,209,88,.4)" stroke-width="1.5"/>
+        <text x="255" y="218" text-anchor="middle" fill="var(--green)" font-family="Inter,sans-serif" font-size="10" font-weight="700">npm</text>
+        <text x="255" y="238" text-anchor="middle" fill="rgba(255,255,255,.4)" font-family="Inter,sans-serif" font-size="8">forms</text>
+        <path d="M130 170 L145 190" stroke="rgba(255,255,255,.1)" stroke-width="1"/>
+        <path d="M200 150 L200 190" stroke="rgba(255,255,255,.1)" stroke-width="1"/>
+        <path d="M270 170 L255 190" stroke="rgba(255,255,255,.1)" stroke-width="1"/>
+        <defs>
+          <linearGradient id="pkgBg" x1="0" y1="0" x2="400" y2="320">
+            <stop stop-color="#1a1208"/><stop offset="1" stop-color="#0d0d0d"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 12: PACKAGE ORG STRUCTURE -->
+<section id="slide-12">
+  <div class="split">
+    <div>
+      <div class="badge reveal" style="color:var(--orange)">Organization</div>
+      <h2 class="reveal reveal-delay-1">Package-Based <span class="grad-orange">Structure</span></h2>
+      <div class="points">
+        <div class="point reveal reveal-delay-2">
+          <div class="point-icon" style="background:rgba(255,109,46,.12);color:var(--orange)">✓</div>
+          <p class="point-text">Clear ownership boundaries</p>
+        </div>
+        <div class="point reveal reveal-delay-3">
+          <div class="point-icon" style="background:rgba(255,109,46,.12);color:var(--orange)">✓</div>
+          <p class="point-text">Reusable design systems</p>
+        </div>
+        <div class="point reveal reveal-delay-4">
+          <div class="point-icon" style="background:rgba(255,109,46,.12);color:var(--orange)">✓</div>
+          <p class="point-text">Consistency across products</p>
+        </div>
+      </div>
+    </div>
+    <div class="reveal reveal-delay-2" style="display:flex;justify-content:center">
+      <div class="pkg-diagram">
+        <div class="arch-label">Package-Based Org Structure</div>
+        <div class="pkg-row">
+          <div class="pkg-block" style="background:rgba(41,151,255,.2);color:var(--blue)">npm</div>
+          <div class="pkg-block" style="background:rgba(255,55,95,.2);color:var(--pink)">npm</div>
+          <div class="pkg-block" style="background:rgba(255,109,46,.2);color:var(--orange)">npm</div>
+          <div class="pkg-block" style="background:rgba(255,109,46,.15);color:var(--orange)">npm</div>
+          <div class="pkg-block" style="background:rgba(255,109,46,.1);color:var(--orange)">npm</div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:.75rem">
+          <div class="pkg-connector"></div><div class="pkg-connector"></div><div class="pkg-connector"></div><div class="pkg-connector"></div><div class="pkg-connector"></div>
+        </div>
+        <div class="pkg-row">
+          <div class="pkg-block" style="background:rgba(41,151,255,.1);border:1px solid rgba(41,151,255,.3);color:var(--blue)">Design Team</div>
+          <div class="pkg-block" style="background:rgba(255,55,95,.1);border:1px solid rgba(255,55,95,.3);color:var(--pink)">App Shell Team</div>
+          <div class="pkg-block" style="background:rgba(255,109,46,.1);border:1px solid rgba(255,109,46,.3);color:var(--orange)">Domain Teams</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 13: HIDDEN COSTS -->
+<section id="slide-13">
+  <div class="split">
+    <div>
+      <div class="badge reveal" style="color:var(--pink)">Warning</div>
+      <h2 class="reveal reveal-delay-1">Packages — <span class="grad-pink">Hidden Costs</span></h2>
+      <div class="points">
+        <div class="point reveal reveal-delay-2">
+          <div class="point-icon" style="background:rgba(255,55,95,.12);color:var(--pink)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <p class="point-text">Version coordination across teams</p>
+        </div>
+        <div class="point reveal reveal-delay-3">
+          <div class="point-icon" style="background:rgba(255,55,95,.12);color:var(--pink)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <p class="point-text">Shared release cycles</p>
+        </div>
+        <div class="point reveal reveal-delay-4">
+          <div class="point-icon" style="background:rgba(255,55,95,.12);color:var(--pink)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <p class="point-text">One breaking change can block many teams</p>
+        </div>
+      </div>
+    </div>
+    <div class="reveal reveal-delay-2" style="display:flex;justify-content:center">
+      <svg viewBox="0 0 320 320" fill="none" style="max-width:320px;width:100%">
+        <rect width="320" height="320" rx="24" fill="url(#confBg)"/>
+        <g transform="translate(60,80)">
+          <circle cx="40" cy="30" r="20" fill="none" stroke="rgba(255,55,95,.5)" stroke-width="2"/>
+          <circle cx="36" cy="26" r="2" fill="rgba(255,55,95,.5)"/>
+          <circle cx="44" cy="26" r="2" fill="rgba(255,55,95,.5)"/>
+          <text x="40" y="36" text-anchor="middle" fill="rgba(255,55,95,.4)" font-size="10">?</text>
+          <line x1="60" y1="30" x2="120" y2="50" stroke="rgba(255,55,95,.3)" stroke-width="2" stroke-dasharray="4 2"/>
+          <text x="40" y="72" text-anchor="middle" fill="rgba(255,255,255,.3)" font-family="Inter,sans-serif" font-size="9" font-weight="500">Team A</text>
+        </g>
+        <g transform="translate(160,60)">
+          <circle cx="40" cy="30" r="20" fill="none" stroke="rgba(41,151,255,.5)" stroke-width="2"/>
+          <circle cx="36" cy="26" r="2" fill="rgba(41,151,255,.5)"/>
+          <circle cx="44" cy="26" r="2" fill="rgba(41,151,255,.5)"/>
+          <text x="40" y="36" text-anchor="middle" fill="rgba(41,151,255,.4)" font-size="10">?</text>
+          <line x1="20" y1="40" x2="-40" y2="60" stroke="rgba(41,151,255,.3)" stroke-width="2" stroke-dasharray="4 2"/>
+          <text x="40" y="72" text-anchor="middle" fill="rgba(255,255,255,.3)" font-family="Inter,sans-serif" font-size="9" font-weight="500">Team B</text>
+        </g>
+        <g transform="translate(110,170)">
+          <circle cx="40" cy="30" r="20" fill="none" stroke="rgba(191,90,242,.5)" stroke-width="2"/>
+          <circle cx="36" cy="26" r="2" fill="rgba(191,90,242,.5)"/>
+          <circle cx="44" cy="26" r="2" fill="rgba(191,90,242,.5)"/>
+          <text x="40" y="36" text-anchor="middle" fill="rgba(191,90,242,.4)" font-size="10">?</text>
+          <line x1="30" y1="10" x2="-10" y2="-40" stroke="rgba(191,90,242,.3)" stroke-width="2" stroke-dasharray="4 2"/>
+          <line x1="50" y1="10" x2="90" y2="-30" stroke="rgba(191,90,242,.3)" stroke-width="2" stroke-dasharray="4 2"/>
+          <text x="40" y="72" text-anchor="middle" fill="rgba(255,255,255,.3)" font-family="Inter,sans-serif" font-size="9" font-weight="500">Team C</text>
+        </g>
+        <text x="160" y="268" text-anchor="middle" fill="rgba(255,55,95,.4)" font-family="Inter,sans-serif" font-size="10" font-weight="600">breaking change v2.0</text>
+        <defs>
+          <linearGradient id="confBg" x1="0" y1="0" x2="320" y2="320">
+            <stop stop-color="#1a0a14"/><stop offset="1" stop-color="#0d0d0d"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 14: MICRO FRONTENDS -->
+<section id="slide-14">
+  <div class="center-content" style="gap:1.5rem">
+    <div class="badge reveal" style="color:var(--teal)">2020 — Present</div>
+    <h1 class="reveal reveal-delay-1"><span class="grad-blue">Micro-Frontends</span></h1>
+    <p class="reveal reveal-delay-2" style="max-width:600px;text-align:center">
+      The next evolution — frontend split by business domain, each part built and deployed independently.
+    </p>
+    <div class="reveal reveal-delay-3" style="margin-top:2rem">
+      <svg viewBox="0 0 700 220" fill="none" style="max-width:700px;width:100%">
+        <rect x="0" y="0" width="700" height="220" rx="20" fill="rgba(41,151,255,.04)" stroke="rgba(41,151,255,.15)" stroke-width="1.5"/>
+        <text x="350" y="30" text-anchor="middle" fill="rgba(41,151,255,.5)" font-family="Inter,sans-serif" font-size="13" font-weight="600">Application Shell</text>
+        <rect x="30" y="50" width="190" height="140" rx="14" fill="rgba(41,151,255,.1)" stroke="rgba(41,151,255,.3)" stroke-width="1.5"/>
+        <text x="125" y="100" text-anchor="middle" fill="var(--blue)" font-family="Inter,sans-serif" font-size="13" font-weight="700">Platform / Shell</text>
+        <text x="125" y="120" text-anchor="middle" fill="rgba(255,255,255,.3)" font-family="Inter,sans-serif" font-size="10">Navigation, Auth, Routing</text>
+        <text x="125" y="170" text-anchor="middle" fill="rgba(41,151,255,.4)" font-family="Inter,sans-serif" font-size="9" font-weight="500">Platform Team</text>
+        <rect x="250" y="50" width="190" height="140" rx="14" fill="rgba(48,209,88,.1)" stroke="rgba(48,209,88,.3)" stroke-width="1.5"/>
+        <text x="345" y="100" text-anchor="middle" fill="var(--green)" font-family="Inter,sans-serif" font-size="13" font-weight="700">Checkout</text>
+        <text x="345" y="120" text-anchor="middle" fill="rgba(255,255,255,.3)" font-family="Inter,sans-serif" font-size="10">Deploys Alone</text>
+        <text x="345" y="170" text-anchor="middle" fill="rgba(48,209,88,.4)" font-family="Inter,sans-serif" font-size="9" font-weight="500">Checkout Team</text>
+        <rect x="470" y="50" width="200" height="140" rx="14" fill="rgba(191,90,242,.1)" stroke="rgba(191,90,242,.3)" stroke-width="1.5"/>
+        <text x="570" y="100" text-anchor="middle" fill="var(--purple)" font-family="Inter,sans-serif" font-size="13" font-weight="700">Profile</text>
+        <text x="570" y="120" text-anchor="middle" fill="rgba(255,255,255,.3)" font-family="Inter,sans-serif" font-size="10">Deploys Alone</text>
+        <text x="570" y="170" text-anchor="middle" fill="rgba(191,90,242,.4)" font-family="Inter,sans-serif" font-size="9" font-weight="500">Profile Team</text>
+      </svg>
+    </div>
+    <div class="reveal reveal-delay-4" style="display:flex;gap:1rem;margin-top:1.5rem;flex-wrap:wrap;justify-content:center">
+      <span class="tag" style="border-color:rgba(41,151,255,.3);color:var(--blue)">Independent releases</span>
+      <span class="tag" style="border-color:rgba(48,209,88,.3);color:var(--green)">Team autonomy</span>
+      <span class="tag" style="border-color:rgba(191,90,242,.3);color:var(--purple)">Domain ownership</span>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 15: MICRO-FRONTEND APPROACHES -->
+<section id="slide-15">
+  <div style="max-width:1100px;margin:0 auto;width:100%">
+    <div class="badge reveal" style="color:var(--teal)">Implementation</div>
+    <h2 class="reveal reveal-delay-1">Micro-Frontend <span class="grad-blue">Approaches</span></h2>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;margin-top:2rem">
+
+      <!-- SINGLE-SPA — FAVORITE -->
+      <div class="reveal reveal-delay-1" style="background:linear-gradient(135deg,rgba(41,151,255,.1),rgba(90,200,250,.06));border:2px solid rgba(41,151,255,.4);border-radius:24px;padding:2rem;position:relative;overflow:hidden">
+        <div style="position:absolute;top:1rem;right:1rem;background:var(--blue);color:#fff;font-size:.85rem;font-weight:700;padding:.25rem .75rem;border-radius:999px;letter-spacing:.05em">★ RECOMMENDED</div>
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style="margin-bottom:1rem">
+          <rect width="40" height="40" rx="10" fill="rgba(41,151,255,.2)"/>
+          <path d="M12 28V12l8-4 8 4v16l-8 4-8-4z" stroke="#2997ff" stroke-width="1.5" fill="none"/>
+          <path d="M12 12l8 4 8-4M20 16v12" stroke="rgba(41,151,255,.5)" stroke-width="1"/>
+        </svg>
+        <h3 style="color:var(--blue);font-size:2rem;margin-bottom:.75rem">single-spa</h3>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Framework-agnostic runtime</p>
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Shared dependencies & lazy loading</p>
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Independent deploy per micro-app</p>
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Mature ecosystem & large community</p>
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ In-browser orchestration, no build coupling</p>
+          <p class="body-text" style="color:rgba(255,55,95,.7);margin-top:.25rem">✗ Learning curve for layout engine</p>
+          <p class="body-text" style="color:rgba(255,55,95,.7)">✗ Debugging across apps is harder</p>
+        </div>
+      </div>
+
+      <!-- MODULE FEDERATION -->
+      <div class="reveal reveal-delay-2" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:2rem">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style="margin-bottom:1rem">
+          <rect width="40" height="40" rx="10" fill="rgba(255,109,46,.15)"/>
+          <circle cx="20" cy="20" r="8" stroke="#ff6d2e" stroke-width="1.5" fill="none"/>
+          <circle cx="20" cy="8" r="3" fill="rgba(255,109,46,.5)"/>
+          <circle cx="10" cy="28" r="3" fill="rgba(255,109,46,.5)"/>
+          <circle cx="30" cy="28" r="3" fill="rgba(255,109,46,.5)"/>
+        </svg>
+        <h3 style="color:var(--orange);font-size:2rem;margin-bottom:.75rem">Module Federation</h3>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Native Webpack 5 / Rspack support</p>
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Shares modules at build level</p>
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ No extra runtime orchestrator needed</p>
+          <p class="body-text" style="color:rgba(255,55,95,.7);margin-top:.25rem">✗ Tightly coupled to bundler</p>
+          <p class="body-text" style="color:rgba(255,55,95,.7)">✗ Version mismatch risks at runtime</p>
+          <p class="body-text" style="color:rgba(255,55,95,.7)">✗ Complex config for large-scale setups</p>
+        </div>
+      </div>
+
+      <!-- IFRAMES -->
+      <div class="reveal reveal-delay-3" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:2rem">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style="margin-bottom:1rem">
+          <rect width="40" height="40" rx="10" fill="rgba(191,90,242,.15)"/>
+          <rect x="8" y="10" width="24" height="20" rx="3" stroke="#bf5af2" stroke-width="1.5" fill="none"/>
+          <line x1="8" y1="16" x2="32" y2="16" stroke="#bf5af2" stroke-width="1"/>
+          <rect x="12" y="19" width="16" height="8" rx="2" stroke="rgba(191,90,242,.4)" stroke-width="1" fill="rgba(191,90,242,.08)" stroke-dasharray="3 2"/>
+        </svg>
+        <h3 style="color:var(--purple);font-size:2rem;margin-bottom:.75rem">Iframes</h3>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Full isolation by default</p>
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Zero framework dependency</p>
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Simple to implement</p>
+          <p class="body-text" style="color:rgba(255,55,95,.7);margin-top:.25rem">✗ Poor UX — no shared routing or layout</p>
+          <p class="body-text" style="color:rgba(255,55,95,.7)">✗ Performance overhead per frame</p>
+          <p class="body-text" style="color:rgba(255,55,95,.7)">✗ Communication between frames is clunky</p>
+        </div>
+      </div>
+
+      <!-- WEB COMPONENTS -->
+      <div class="reveal reveal-delay-4" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:2rem">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style="margin-bottom:1rem">
+          <rect width="40" height="40" rx="10" fill="rgba(48,209,88,.15)"/>
+          <polygon points="20,8 32,20 20,32 8,20" stroke="#30d158" stroke-width="1.5" fill="none"/>
+          <polygon points="20,14 26,20 20,26 14,20" fill="rgba(48,209,88,.3)"/>
+        </svg>
+        <h3 style="color:var(--green);font-size:2rem;margin-bottom:.75rem">Web Components</h3>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Browser-native standard</p>
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Shadow DOM encapsulation</p>
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Works with any framework</p>
+          <p class="body-text" style="color:rgba(255,55,95,.7);margin-top:.25rem">✗ Limited state sharing patterns</p>
+          <p class="body-text" style="color:rgba(255,55,95,.7)">✗ SSR support is poor</p>
+          <p class="body-text" style="color:rgba(255,55,95,.7)">✗ Tooling still catching up</p>
+        </div>
+      </div>
+
+      <!-- NATIVE FEDERATION / IMPORT MAPS -->
+      <div class="reveal reveal-delay-5" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:2rem">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style="margin-bottom:1rem">
+          <rect width="40" height="40" rx="10" fill="rgba(255,214,10,.15)"/>
+          <path d="M10 15h20M10 20h20M10 25h20" stroke="#ffd60a" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="30" cy="15" r="2" fill="#ffd60a"/>
+          <circle cx="30" cy="25" r="2" fill="#ffd60a"/>
+        </svg>
+        <h3 style="color:var(--yellow);font-size:2rem;margin-bottom:.75rem">Import Maps / Native Federation</h3>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Browser-native ES module loading</p>
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ No bundler lock-in</p>
+          <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Lightweight, standards-based</p>
+          <p class="body-text" style="color:rgba(255,55,95,.7);margin-top:.25rem">✗ Still emerging — ecosystem is small</p>
+          <p class="body-text" style="color:rgba(255,55,95,.7)">✗ Limited production battle-testing</p>
+          <p class="body-text" style="color:rgba(255,55,95,.7)">✗ Needs polyfills for older browsers</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 16: MIGRATION TO MFE -->
+<section id="slide-16">
+  <div style="max-width:1000px;margin:0 auto;width:100%">
+    <div class="badge reveal" style="color:var(--green)">Strategy</div>
+    <h2 class="reveal reveal-delay-1">Migration to <span class="grad-green">Micro-Frontends</span></h2>
+    <p class="reveal reveal-delay-2" style="margin-bottom:2rem;max-width:700px">A step-by-step approach to incrementally adopt MFE without rewriting everything at once.</p>
+
+    <div style="position:relative;display:flex;flex-direction:column;gap:0">
+      <!-- Vertical line -->
+      <div style="position:absolute;left:23px;top:24px;bottom:24px;width:2px;background:linear-gradient(180deg,var(--blue),var(--green),var(--orange),var(--purple),var(--pink),var(--teal),var(--yellow),var(--blue),var(--green));border-radius:2px"></div>
+
+      <!-- Step 1 -->
+      <div class="reveal reveal-delay-1" style="display:flex;gap:1.5rem;align-items:flex-start;padding:.75rem 0">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(41,151,255,.15);border:2px solid var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:2rem;font-weight:700;color:var(--blue);z-index:1">1</div>
+        <div style="flex:1;background:rgba(41,151,255,.06);border:1px solid rgba(41,151,255,.15);border-radius:16px;padding:1.25rem 1.5rem">
+          <h3 style="color:var(--blue);font-size:2rem;margin-bottom:.3rem">Proof of Concept</h3>
+          <p class="body-text">Create a standalone application for just one route to try MFE with real data and the client's existing ecosystem.</p>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="reveal reveal-delay-1" style="display:flex;gap:1.5rem;align-items:flex-start;padding:.75rem 0">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(48,209,88,.15);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:2rem;font-weight:700;color:var(--green);z-index:1">2</div>
+        <div style="flex:1;background:rgba(48,209,88,.06);border:1px solid rgba(48,209,88,.15);border-radius:16px;padding:1.25rem 1.5rem">
+          <h3 style="color:var(--green);font-size:2rem;margin-bottom:.3rem">Host Application</h3>
+          <p class="body-text">Create the host app that renders and orchestrates MFE projects via single-spa.</p>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="reveal reveal-delay-2" style="display:flex;gap:1.5rem;align-items:flex-start;padding:.75rem 0">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(255,109,46,.15);border:2px solid var(--orange);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:2rem;font-weight:700;color:var(--orange);z-index:1">3</div>
+        <div style="flex:1;background:rgba(255,109,46,.06);border:1px solid rgba(255,109,46,.15);border-radius:16px;padding:1.25rem 1.5rem">
+          <h3 style="color:var(--orange);font-size:2rem;margin-bottom:.3rem">Shared Services</h3>
+          <p class="body-text">Create services for Auth and Global Context — the cross-cutting concerns every MFE will need.</p>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="reveal reveal-delay-2" style="display:flex;gap:1.5rem;align-items:flex-start;padding:.75rem 0">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(191,90,242,.15);border:2px solid var(--purple);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:2rem;font-weight:700;color:var(--purple);z-index:1">4</div>
+        <div style="flex:1;background:rgba(191,90,242,.06);border:1px solid rgba(191,90,242,.15);border-radius:16px;padding:1.25rem 1.5rem">
+          <h3 style="color:var(--purple);font-size:2rem;margin-bottom:.3rem">Main Container</h3>
+          <p class="body-text">Build the main layout container with shared header and footer — the visual shell users see.</p>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="reveal reveal-delay-3" style="display:flex;gap:1.5rem;align-items:flex-start;padding:.75rem 0">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(255,55,95,.15);border:2px solid var(--pink);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:2rem;font-weight:700;color:var(--pink);z-index:1">5</div>
+        <div style="flex:1;background:rgba(255,55,95,.06);border:1px solid rgba(255,55,95,.15);border-radius:16px;padding:1.25rem 1.5rem">
+          <h3 style="color:var(--pink);font-size:2rem;margin-bottom:.3rem">Inject MFE Parcels</h3>
+          <p class="body-text">Inject every micro-frontend as an independent container using single-spa Parcels — mount anywhere, from any framework.</p>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="reveal reveal-delay-3" style="display:flex;gap:1.5rem;align-items:flex-start;padding:.75rem 0">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(90,200,250,.15);border:2px solid var(--teal);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:2rem;font-weight:700;color:var(--teal);z-index:1">6</div>
+        <div style="flex:1;background:rgba(90,200,250,.06);border:1px solid rgba(90,200,250,.15);border-radius:16px;padding:1.25rem 1.5rem">
+          <h3 style="color:var(--teal);font-size:2rem;margin-bottom:.3rem">Container Wrappers</h3>
+          <p class="body-text">Inside each container implement a wrapper that accesses all needed data using Auth service and Global Context service.</p>
+        </div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="reveal reveal-delay-4" style="display:flex;gap:1.5rem;align-items:flex-start;padding:.75rem 0">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(255,214,10,.15);border:2px solid var(--yellow);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:2rem;font-weight:700;color:var(--yellow);z-index:1">7</div>
+        <div style="flex:1;background:rgba(255,214,10,.06);border:1px solid rgba(255,214,10,.15);border-radius:16px;padding:1.25rem 1.5rem">
+          <h3 style="color:var(--yellow);font-size:2rem;margin-bottom:.3rem">Legacy Bridge</h3>
+          <p class="body-text">Implement a bridge that imports the old non-MFE container, passes props, and returns a new MFE container with the same functionality — no user-facing changes.</p>
+        </div>
+      </div>
+
+      <!-- Step 8 -->
+      <div class="reveal reveal-delay-4" style="display:flex;gap:1.5rem;align-items:flex-start;padding:.75rem 0">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(41,151,255,.15);border:2px solid var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:2rem;font-weight:700;color:var(--blue);z-index:1">8</div>
+        <div style="flex:1;background:rgba(41,151,255,.06);border:1px solid rgba(41,151,255,.15);border-radius:16px;padding:1.25rem 1.5rem">
+          <h3 style="color:var(--blue);font-size:2rem;margin-bottom:.3rem">Go Production</h3>
+          <p class="body-text">Ship everything together — old and new containers coexist, users see no difference, teams gain independence.</p>
+        </div>
+      </div>
+
+      <!-- Step 9 -->
+      <div class="reveal reveal-delay-5" style="display:flex;gap:1.5rem;align-items:flex-start;padding:.75rem 0">
+        <div style="width:48px;height:48px;border-radius:14px;background:rgba(48,209,88,.15);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:2rem;font-weight:700;color:var(--green);z-index:1">9</div>
+        <div style="flex:1;background:rgba(48,209,88,.06);border:1px solid rgba(48,209,88,.15);border-radius:16px;padding:1.25rem 1.5rem">
+          <h3 style="color:var(--green);font-size:2rem;margin-bottom:.3rem">Refactor</h3>
+          <p class="body-text">Incrementally refactor legacy bridges into native MFE containers — remove old code, improve performance, clean up tech debt.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 17: WHAT IS NEXT? -->
+<section id="slide-17" style="background:radial-gradient(ellipse at 50% 30%,rgba(41,151,255,.1),transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(191,90,242,.08),transparent 50%),var(--bg)">
+  <div style="max-width:1100px;margin:0 auto;width:100%">
+    <div class="badge reveal" style="color:var(--blue)">The Future</div>
+    <h1 class="reveal reveal-delay-1">What is <span class="grad-blue">Next</span><span style="color:var(--dim)">.js</span> ?</h1>
+    <p class="reveal reveal-delay-2" style="max-width:700px;margin-bottom:2.5rem">React Server Components change the game. The server does the heavy lifting — the client stays lean.</p>
+
+    <!-- SPA vs RSC comparison -->
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:1.5rem;align-items:start;margin-bottom:3rem" class="reveal reveal-delay-2">
+
+      <!-- SPA SIDE -->
+      <div style="background:rgba(255,55,95,.05);border:1px solid rgba(255,55,95,.15);border-radius:20px;padding:1.5rem">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <rect width="36" height="36" rx="8" fill="rgba(255,55,95,.15)"/>
+            <rect x="6" y="8" width="24" height="20" rx="3" stroke="var(--pink)" stroke-width="1.5" fill="none"/>
+            <path d="M6 14h24" stroke="var(--pink)" stroke-width="1"/>
+            <rect x="9" y="17" width="18" height="8" rx="2" fill="rgba(255,55,95,.15)"/>
+          </svg>
+          <h3 style="color:var(--pink);font-size:2rem;margin:0">Traditional SPA</h3>
+        </div>
+        <p class="body-text" style="color:rgba(255,55,95,.7)">✗ Entire app ships as JS bundle to browser</p>
+        <p class="body-text" style="color:rgba(255,55,95,.7)">✗ Blank page until JS parses & executes</p>
+        <p class="body-text" style="color:rgba(255,55,95,.7)">✗ Hydration blocks interactivity</p>
+        <p class="body-text" style="color:rgba(255,55,95,.7)">✗ Data fetching starts after component mount</p>
+        <p class="body-text" style="color:rgba(255,55,95,.7)">✗ SEO requires extra workarounds</p>
+        <p class="body-text" style="color:rgba(255,55,95,.7)">✗ Bundle grows with every feature</p>
+        <p class="body-text" style="color:rgba(255,55,95,.7)">✗ Secrets exposed — needs separate API layer</p>
+      </div>
+
+      <!-- VS divider -->
+      <div style="display:flex;align-items:center;justify-content:center;padding-top:4rem">
+        <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:var(--dim)">vs</div>
+      </div>
+
+      <!-- RSC SIDE -->
+      <div style="background:linear-gradient(135deg,rgba(41,151,255,.08),rgba(48,209,88,.05));border:2px solid rgba(41,151,255,.3);border-radius:20px;padding:1.5rem;position:relative;overflow:hidden">
+        <div style="position:absolute;top:1rem;right:1rem;background:linear-gradient(135deg,var(--blue),var(--green));color:#fff;font-size:.85rem;font-weight:700;padding:.25rem .75rem;border-radius:999px;letter-spacing:.05em">NEXT.JS 15 + REACT 19</div>
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <rect width="36" height="36" rx="8" fill="rgba(41,151,255,.15)"/>
+            <circle cx="18" cy="18" r="10" stroke="var(--blue)" stroke-width="1.5" fill="none"/>
+            <path d="M12 18h12M18 12v12" stroke="var(--blue)" stroke-width="1.5"/>
+            <circle cx="18" cy="18" r="3" fill="rgba(41,151,255,.4)"/>
+          </svg>
+          <h3 style="color:var(--blue);font-size:2rem;margin:0">Server Components</h3>
+        </div>
+        <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Zero client JS for server components</p>
+        <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Instant HTML — no blank page flash</p>
+        <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Streaming & Suspense for progressive UI</p>
+        <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Data fetching on the server — async/await in components</p>
+        <p class="body-text" style="color:rgba(48,209,88,.9)">✓ SEO-ready by default — full HTML for crawlers</p>
+        <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Bundle stays small — only interactive parts ship JS</p>
+        <p class="body-text" style="color:rgba(48,209,88,.9)">✓ Server Actions — skip the API, call functions directly</p>
+      </div>
+    </div>
+
+    <!-- Key concepts row -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+      <div class="reveal reveal-delay-3" style="background:rgba(41,151,255,.06);border:1px solid rgba(41,151,255,.12);border-radius:16px;padding:1.25rem;text-align:center">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="margin-bottom:.5rem">
+          <rect x="4" y="6" width="24" height="20" rx="3" stroke="var(--blue)" stroke-width="1.5" fill="none"/>
+          <path d="M4 12h24" stroke="var(--blue)" stroke-width="1"/>
+          <rect x="7" y="15" width="8" height="3" rx="1" fill="rgba(41,151,255,.3)"/>
+          <rect x="7" y="20" width="12" height="2" rx="1" fill="rgba(255,255,255,.1)"/>
+        </svg>
+        <p class="body-text" style="color:var(--blue);font-weight:600">'use client'</p>
+        <p class="body-text" style="color:var(--dim);font-size:1.5rem">Opt-in interactivity</p>
+      </div>
+      <div class="reveal reveal-delay-3" style="background:rgba(48,209,88,.06);border:1px solid rgba(48,209,88,.12);border-radius:16px;padding:1.25rem;text-align:center">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="margin-bottom:.5rem">
+          <path d="M6 8h20M6 14h14M6 20h18M6 26h10" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="26" cy="14" r="3" fill="rgba(48,209,88,.3)" stroke="var(--green)" stroke-width="1"/>
+        </svg>
+        <p class="body-text" style="color:var(--green);font-weight:600">Streaming</p>
+        <p class="body-text" style="color:var(--dim);font-size:1.5rem">Progressive UI delivery</p>
+      </div>
+      <div class="reveal reveal-delay-4" style="background:rgba(191,90,242,.06);border:1px solid rgba(191,90,242,.12);border-radius:16px;padding:1.25rem;text-align:center">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="margin-bottom:.5rem">
+          <path d="M16 4v10l6-3" stroke="var(--purple)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M8 20l8 8 8-8" stroke="var(--purple)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <p class="body-text" style="color:var(--purple);font-weight:600">Server Actions</p>
+        <p class="body-text" style="color:var(--dim);font-size:1.5rem">No API routes needed</p>
+      </div>
+      <div class="reveal reveal-delay-4" style="background:rgba(255,109,46,.06);border:1px solid rgba(255,109,46,.12);border-radius:16px;padding:1.25rem;text-align:center">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="margin-bottom:.5rem">
+          <rect x="6" y="4" width="20" height="24" rx="3" stroke="var(--orange)" stroke-width="1.5" fill="none"/>
+          <path d="M6 10h20" stroke="var(--orange)" stroke-width="1"/>
+          <rect x="10" y="14" width="12" height="4" rx="1" fill="rgba(255,109,46,.2)"/>
+          <rect x="10" y="21" width="8" height="4" rx="1" fill="rgba(255,109,46,.15)"/>
+        </svg>
+        <p class="body-text" style="color:var(--orange);font-weight:600">App Router</p>
+        <p class="body-text" style="color:var(--dim);font-size:1.5rem">File-based layouts</p>
+      </div>
+      <div class="reveal reveal-delay-5" style="background:rgba(90,200,250,.06);border:1px solid rgba(90,200,250,.12);border-radius:16px;padding:1.25rem;text-align:center">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="margin-bottom:.5rem">
+          <path d="M16 4L4 10v12l12 6 12-6V10L16 4z" stroke="var(--teal)" stroke-width="1.5" fill="none"/>
+          <path d="M4 10l12 6 12-6M16 16v12" stroke="rgba(90,200,250,.4)" stroke-width="1"/>
+        </svg>
+        <p class="body-text" style="color:var(--teal);font-weight:600">SSR / SSG / ISR</p>
+        <p class="body-text" style="color:var(--dim);font-size:1.5rem">Hybrid rendering</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 18: Q&A -->
+<section id="slide-18" style="background:radial-gradient(ellipse at 50% 50%,rgba(41,151,255,.1),transparent 50%),radial-gradient(ellipse at 20% 80%,rgba(191,90,242,.08),transparent 40%),radial-gradient(ellipse at 80% 20%,rgba(48,209,88,.06),transparent 40%),var(--bg)">
+  <div class="center-content" style="gap:2rem">
+    <div class="reveal">
+      <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+        <circle cx="50" cy="50" r="48" fill="none" stroke="url(#qaGrad)" stroke-width="2"/>
+        <circle cx="50" cy="50" r="36" fill="none" stroke="url(#qaGrad)" stroke-width="1" opacity=".3"/>
+        <text x="50" y="62" text-anchor="middle" fill="url(#qaGrad)" font-family="Inter,sans-serif" font-size="42" font-weight="800">?</text>
+        <defs>
+          <linearGradient id="qaGrad" x1="0" y1="0" x2="100" y2="100">
+            <stop stop-color="#2997ff"/>
+            <stop offset=".5" stop-color="#bf5af2"/>
+            <stop offset="1" stop-color="#ff375f"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <h1 class="reveal reveal-delay-1" style="font-size:clamp(3.5rem,7vw,6rem)">
+      <span class="grad-blue">Q</span><span style="color:var(--dim)">&</span><span class="grad-purple">A</span>
+    </h1>
+    <p class="reveal reveal-delay-2" style="max-width:550px;text-align:center">
+      Where is your product on this timeline? Are teams blocked by releases today? Is complexity justified by scale?
+    </p>
+    <div class="reveal reveal-delay-3" style="display:flex;gap:1.5rem;margin-top:2rem;flex-wrap:wrap;justify-content:center">
+      <div style="background:rgba(41,151,255,.08);border:1px solid rgba(41,151,255,.15);border-radius:16px;padding:1rem 1.5rem;text-align:center">
+        <p class="body-text" style="color:var(--blue);font-weight:600">Vitalik Tabaka</p>
+      </div>
+      <div style="background:rgba(191,90,242,.08);border:1px solid rgba(191,90,242,.15);border-radius:16px;padding:1rem 1.5rem;text-align:center">
+        <p class="body-text" style="color:var(--purple);font-weight:600">Ivan Koretskyy</p>
+      </div>
+    </div>
+    <p class="reveal reveal-delay-4" style="color:var(--dim);margin-top:1.5rem;font-size:2rem">Thank you!</p>
+  </div>
+</section>
+
+<div class="kbd-hint" id="kbdHint">
+  <span>←</span><span>→</span> or scroll
+</div>
+
+<script>
+const sections=document.querySelectorAll('section'),dots=document.querySelectorAll('.nav-dot'),counter=document.getElementById('currentSlide'),bar=document.getElementById('scrollProgress'),hint=document.getElementById('kbdHint');
+let cur=0,ticking=false;
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible')}})},{threshold:.15,rootMargin:'0px 0px -50px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+function updateNav(){
+  const st=window.scrollY,wh=window.innerHeight;
+  let idx=0;
+  sections.forEach((s,i)=>{if(st>=s.offsetTop-wh/2)idx=i});
+  if(idx!==cur){cur=idx;dots.forEach((d,i)=>d.classList.toggle('active',i===cur));counter.textContent=cur+1}
+  bar.style.width=((st/(document.body.scrollHeight-wh))*100)+'%';
+}
+window.addEventListener('scroll',()=>{if(!ticking){requestAnimationFrame(()=>{updateNav();ticking=false});ticking=true}});
+dots.forEach(d=>d.addEventListener('click',()=>{const i=+d.dataset.slide;sections[i].scrollIntoView({behavior:'smooth'})}));
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();if(cur<sections.length-1)sections[cur+1].scrollIntoView({behavior:'smooth'})}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();if(cur>0)sections[cur-1].scrollIntoView({behavior:'smooth'})}
+});
+let hintHidden=false;
+window.addEventListener('scroll',()=>{if(!hintHidden&&window.scrollY>100){hint.classList.add('faded');hintHidden=true}},{passive:true});
+let lastSY=0;
+window.addEventListener('scroll',()=>{
+  const nav=document.getElementById('mainNav'),sy=window.scrollY;
+  nav.classList.toggle('hidden',sy>lastSY&&sy>100);
+  lastSY=sy;
+},{passive:true});
+</script>
+</body>
+</html>
