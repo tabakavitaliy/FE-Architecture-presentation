@@ -106,6 +106,10 @@ p,.body-text{font-size:var(--fs-body);line-height:1.5;color:var(--dim);font-weig
 .kbd-hint span{padding:.2rem .5rem;border:1px solid rgba(255,255,255,.15);border-radius:6px;font-size:var(--fs-body)}
 .kbd-hint.faded{opacity:0}
 
+.qr-code{position:fixed;bottom:4.5rem;right:1.5rem;z-index:90;opacity:.7;transition:opacity .3s;background:rgba(255,255,255,.95);padding:.5rem;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.qr-code:hover{opacity:1}
+.qr-code img{display:block;width:80px;height:80px;border-radius:6px}
+
 .scroll-progress{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--blue),var(--purple));z-index:200;transition:width .1s;width:0}
 
 @media(max-width:768px){
@@ -1249,6 +1253,10 @@ p,.body-text{font-size:var(--fs-body);line-height:1.5;color:var(--dim);font-weig
     <p class="reveal reveal-delay-4" style="color:var(--dim);margin-top:1.5rem;font-size:2rem">Thank you!</p>
   </div>
 </section>
+
+<a href="https://tabakavitaliy.github.io/FE-Architecture-presentation" target="_blank" rel="noopener noreferrer" class="qr-code" title="Open presentation">
+  <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://tabakavitaliy.github.io/FE-Architecture-presentation" alt="QR Code for presentation">
+</a>
 
 <div class="kbd-hint" id="kbdHint">
   <span>←</span><span>→</span> or scroll
